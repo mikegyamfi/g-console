@@ -48,7 +48,7 @@ def send_bundle(user, receiver, bundle_amount, reference):
     print(type(bundle_amount))
     print(type(receiver))
     payload = {'type': 'pushData',
-               'apikey': '8ecce2fb4ba200b6ba148a7994035987f22d411a',
+               'apikey': config('API_KEY'),
                'ref': str(reference),
                'data': str(int(bundle_amount)),
                'share': str(receiver)
