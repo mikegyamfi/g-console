@@ -1,1 +1,1 @@
-web: gunicorn geosams_console.wsgi
+web: gunicorn goesams_console.wsgi
