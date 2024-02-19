@@ -1,9 +1,11 @@
 from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib.auth.views import LogoutView
 from django.urls import path
 
 from console_app import views
 from console_app.api import api_views
+from django.conf import settings as conf_settings
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -32,5 +34,5 @@ urlpatterns = [
     path('api/v1/all_transactions', api_views.get_all_transactions, name='all_transactions'),
     path('api/v1/generate_token', api_views.generate_token, name='generate_token'),
     path('token_management', views.api_page, name='token_management')
-]
+] + static(conf_settings.STATIC_URL, document_root=conf_settings.STATIC_ROOT)
 

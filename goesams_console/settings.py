@@ -94,6 +94,21 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'HOST': config("DATABASE_HOST"),
+#         'PORT': config("DATABASE_PORT"),
+#         'NAME': 'shares-app-db',
+#         'USER': config("DATABASE_USERNAME"),
+#         'PASSWORD': config("DATABASE_PASSWORD"),
+#         'OPTIONS': {
+#             'sslmode': 'require'
+#         }
+#     }
+# }
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

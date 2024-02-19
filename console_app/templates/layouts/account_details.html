@@ -26,17 +26,22 @@
                     </div>
                     <div class="mb-3">
                       <label for="exampleInputPassword1" class="form-label">Email</label>
-                      <input name="volume" value="{{ user.email }}" type="text" class="form-control" id="exampleInputPassword1">
+                      <input  name="email" value="{{ user.email }}" type="text" class="form-control" id="exampleInputPassword1">
                     </div>
 
                       <div class="mb-3">
                       <label class="form-label">Business Name</label>
-                      <input name="volume" type="text" value="{{ data.business_name }}" class="form-control">
+                      <input name="business" type="text" value="{{ data.business_name }}" class="form-control">
                     </div>
 
                       <div class="mb-3">
                       <label for="exampleInputPassword1" class="form-label">Phone Number</label>
-                      <input name="volume" type="number" value="{{ data.phone }}" class="form-control">
+                      <input name="phoneNumber" type="number" value="{{ data.phone }}" class="form-control">
+                    </div>
+
+                      <div class="mb-3">
+                      <label for="exampleInputPassword1" class="form-label">SMS API Key</label>
+                      <input name="sms" type="text" value="{{ data.sms_api }}" class="form-control">
                     </div>
                     <button type="submit" class="btn btn-primary">Update</button>
                   </form>

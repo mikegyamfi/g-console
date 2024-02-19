@@ -45,13 +45,13 @@ def home(request):
     current_year = datetime.now().year
     transactions_count = models.NewTransaction.objects.filter(user=request.user).count()
     total_bundle_volume = models.NewTransaction.objects.filter(transaction_date__year=current_year,
-                                                               transaction_date__month=current_month) \
+                                                               transaction_date__month=current_month, user=request.user) \
         .aggregate(total_bundle_volume=Sum('bundle_amount')) \
         .get('total_bundle_volume', 0)
     thirty_days_ago = timezone.now() - timezone.timedelta(days=30)
     most_recent_5_txns = models.NewTransaction.objects.filter(user=request.user).order_by('-transaction_date')[:5]
 
-    daily_totals = models.NewTransaction.objects.filter(transaction_date__gte=thirty_days_ago) \
+    daily_totals = models.NewTransaction.objects.filter(transaction_date__gte=thirty_days_ago, user=request.user) \
         .values('transaction_date__date') \
         .annotate(total_bundle=Sum('bundle_amount'))
 
@@ -79,14 +79,19 @@ def user_profile(request):
     if request.method == "POST":
         business_name = request.POST.get("business")
         phone = request.POST.get("phoneNumber")
-        sms_name = request.POST.get("smsName")
+        sms_api = request.POST.get("sms")
+        email = request.POST.get("email")
 
         updated_user = models.UserProfile.objects.filter(user=request.user).first()
         updated_user.business_name = business_name
         updated_user.phone = phone
-        updated_user.sms_sender_name = sms_name
+        updated_user.sms_api = sms_api
+
+        user = models.CustomUser.objects.filter(id=request.user.id).first()
+        user.email = email
 
         updated_user.save()
+        user.save()
         messages.success(request, "Profile Updated Successfully")
     user_profile_details = models.UserProfile.objects.filter(user=request.user).first()
     user = request.user
@@ -141,13 +146,17 @@ def send_bundle_page(request):
                     receiver_message = f"Your bundle purchase has been completed successfully. {amount}MB has been credited to you by {current_user.phone}.\nReference: {reference}\n"
                     sms_message = f"Hello @{request.user.username}. Your bundle purchase has been completed successfully. {amount}MB has been credited to {receiver}.\nReference: {reference}\nCurrent Wallet Balance: {current_user.bundle_balance}\nThank you for using Geosams.\n\nGeosams"
 
-                    response1 = requests.get(
-                        f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{current_user.phone}&from=GEO_AT&sms={sms_message}")
-                    print(response1.text)
+                    try:
+                        response1 = requests.get(
+                            f"https://sms.arkesel.com/sms/api?action=send-sms&api_key={current_user.sms_api}&to=0{current_user.phone}&from={current_user.business_name}&sms={sms_message}")
+                        print(response1.text)
 
-                    response2 = requests.get(
-                        f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to={receiver}&from=GEO_AT&sms={receiver_message}")
-                    print(response2.text)
+                        response2 = requests.get(
+                            f"https://sms.arkesel.com/sms/api?action=send-sms&api_key={current_user.sms_api}&to={receiver}&from={current_user.business_name}&sms={receiver_message}")
+                        print(response2.text)
+                    except:
+                        messages.success(request, "Transaction was completed successfully")
+                        return redirect(send_bundle_page)
                     messages.success(request, "Transaction was completed successfully")
                     return redirect(send_bundle_page)
                 else:

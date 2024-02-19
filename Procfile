@@ -1,0 +1,1 @@
+web: gunicorn geosams_console.wsgi
