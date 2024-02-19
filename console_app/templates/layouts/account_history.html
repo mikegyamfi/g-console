@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+      <div class="container-fluid">
+        <!--  Row 1 -->
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h3>Transaction History</h3>
+                                  <span>View your recent transactions</span>
+            </div>
+        </div>
+        <div class="row">
+          <div class="col-12 d-flex align-items-stretch">
+            <div class="card w-100">
+              <div class="card-body p-4">
+                <h5 class="card-title fw-semibold mb-4">Recent Transactions</h5>
+                <div class="table-responsive">
+                  <table id="txnTable" class="table text-left align-left">
+                    <thead class="text-dark fs-4">
+                      <tr>
+                        <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">Receiver</h6>
+                        </th>
+                        <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">Bundle Volume</h6>
+                        </th>
+                        <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">Reference</h6>
+                        </th>
+                        <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">Status</h6>
+                        </th>
+                        <th class="border-bottom-0">
+                          <h6 class="mb-0">Date</h6>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {%  for txn in txns %}
+                      <tr>
+                        <td class="border-bottom-0"><h6 class="fw-semibold mb-0">{{ txn.account_number }}</h6></td>
+                        <td class="border-bottom-0">
+                            <h6 class="fw-semibold mb-1">{{ txn.bundle_amount }}MB</h6>
+                        </td>
+                        <td class="border-bottom-0">
+                          <p class="mb-0 fw-normal">{{ txn.reference }}</p>
+                        </td>
+                        <td class="border-bottom-0">
+                          <div class="d-flex align-items-center gap-2">
+                              {% if txn.transaction_status == "Completed" %}
+                            <span class="badge bg-success rounded-3 fw-semibold">{{ txn.transaction_status }}</span>
+                              {% else %}
+                                  <span class="badge bg-success rounded-3 fw-semibold">{{ txn.transaction_status }}</span>
+                              {% endif %}
+                          </div>
+                        </td>
+                        <td class="border-bottom-0">
+                          <p class="mb-0">{{ txn.transaction_date }}</p>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+        {% include 'inc/footer.html' %}
+{% endblock content %}

@@ -1,0 +1,170 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign Up - Geosams Console</title>
+  <link rel="shortcut icon" type="image/png" href="{% static 'assets/images/logos/favicon.png' %}" />
+  <link rel="stylesheet" href="{% static 'assets/css/styles.min.css' %}" />
+</head>
+
+<body>
+  <!--  Body Wrapper -->
+  <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
+    data-sidebar-position="fixed" data-header-position="fixed">
+    <div
+      class="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center">
+      <div class="d-flex align-items-center justify-content-center w-100">
+        <div class="row justify-content-center w-100">
+          <div class="col-md-8 col-lg-6 col-xxl-3">
+            <div class="card mb-0">
+              <div class="card-body">
+                <a href="./index.html" class="text-nowrap logo-img text-center d-block py-3 w-100">
+                  <img src="../assets/images/logos/dark-logo.svg" width="180" alt="">
+                </a>
+                <p class="text-center">Sign Up for an Account</p>
+                <form class="mb-3" method="POST">
+                  {% csrf_token %}
+                <div class="mb-3">
+                {% if form.first_name.errors %}
+                    <ul>
+                    {% for error in form.first_name.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+                  <label for="username" class="form-label">First Name</label>
+                    {{form.first_name}}
+                </div>
+
+                <div class="mb-3">
+                {% if form.last_name.errors %}
+                    <ul>
+                    {% for error in form.last_name.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+                  <label for="username" class="form-label">Last Name</label>
+                    {{form.last_name}}
+                </div>
+                <div class="mb-3">
+                {% if form.username.errors %}
+                    <ul>
+                    {% for error in form.username.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+                  <label for="username" class="form-label">Username</label>
+                    {{form.username}}
+                </div>
+                <div class="mb-3">
+                {% if form.business_name.errors %}
+                    <ul>
+                    {% for error in form.business_name.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+                  <label for="username" class="form-label">Business Name</label>
+                    {{form.business_name}}
+                </div>
+                {% if form.phone.errors %}
+                    <ul>
+                    {% for error in form.phone.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+                <div class="mb-3">
+                  <label for="username" class="form-label">Phone</label>
+                    {{form.phone}}
+                </div>
+                <div class="mb-3">
+                {% if form.email.errors %}
+                    <ul>
+                    {% for error in form.email.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+                  <label for="email" class="form-label">Email</label>
+                  <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" />
+                </div>
+                <div class="mb-3 form-password-toggle">
+                    {% if form.password1.errors %}
+                    <ul>
+                    {% for error in form.password1.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+                  <label class="form-label" for="password">Password</label>
+                  <div class="input-group input-group-merge">
+                      {{form.password1}}
+                    <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                  </div>
+                </div>
+                <div class="mb-3 form-password-toggle">
+                {% if form.password2.errors %}
+                    <ul>
+                    {% for error in form.password2.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+                  <label class="form-label" for="password">Confirm Password</label>
+                  <div class="input-group input-group-merge">
+                      {{form.password2}}
+                    <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary d-grid w-100">Sign up</button>
+              </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="{% static 'assets/libs/jquery/dist/jquery.min.js' %}"></script>
+  <script src="{% static 'assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
+
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+        {% for msg in messages %}
+            {% if msg.tags == "success" %}
+            Swal.fire({
+                text: '{{ msg }}',
+                icon: 'success',
+                {#timer: 1000#}
+            })
+            {% elif msg.tags == "warning" %}
+            Swal.fire({
+                text: '{{ msg }}',
+                icon: 'info',
+                {#timer: 1500#}
+            })
+
+                {% elif msg.tags == "info" %}
+            Swal.fire({
+                text: '{{ msg }}',
+                icon: 'info',
+            })
+            {% else %}
+            Swal.fire({
+                text: '{{ msg }}',
+                icon: 'error',
+                {#timer: 1000#}
+            })
+            {% endif %}
+        {% endfor %}
+      </script>
+</body>
+
+</html>

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+      <!--  Header End -->
+      <div class="container-fluid">
+        <div class="container-fluid">
+          <div class="row">
+              <div class="col-12 mb-4">
+                  <div class="card p-4">
+                      <h4>Account Details</h4>
+                  </div>
+              </div>
+              <h5 class="card-title fw-semibold mb-4">Account Details Form</h5>
+              <div class="row">
+                 <div class="col-lg-4 mt-5 mb-5">
+                    <lottie-player src="https://lottie.host/7b8bef2e-1008-4e93-bb30-4ecd048f0ca6/dDZ71NrrGw.json" background="##fff" speed="1" style="width: 200px; height: 200px" autoplay direction="1" mode="normal"></lottie-player>
+                 </div>
+                  <div class="col-lg-8">
+                        <div class="card mb-0">
+                <div class="card-body">
+                  <form method="post">
+                      {% csrf_token %}
+                    <div class="mb-3">
+                      <label for="exampleInputEmail1" class="form-label">Full Name</label>
+                      <input disabled name="receiver" value="{{ user.first_name }} {{ user.last_name }}" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+                    </div>
+                    <div class="mb-3">
+                      <label for="exampleInputPassword1" class="form-label">Email</label>
+                      <input name="volume" value="{{ user.email }}" type="text" class="form-control" id="exampleInputPassword1">
+                    </div>
+
+                      <div class="mb-3">
+                      <label class="form-label">Business Name</label>
+                      <input name="volume" type="text" value="{{ data.business_name }}" class="form-control">
+                    </div>
+
+                      <div class="mb-3">
+                      <label for="exampleInputPassword1" class="form-label">Phone Number</label>
+                      <input name="volume" type="number" value="{{ data.phone }}" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                  </form>
+                </div>
+              </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+              </div>
+          </div>
+
+        </div>
+      </div>
+{% endblock content %}

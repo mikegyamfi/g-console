@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block content %}
+      <!--  Header End -->
+      <div class="container-fluid">
+        <div class="container-fluid">
+          <div class="row">
+              <div class="col-12 mb-4">
+                  <div class="card p-4">
+                      <h4>Send Bundle Page</h4>
+                  </div>
+              </div>
+              <div class="col-lg-4">
+                  <lottie-player src="https://lottie.host/78a39612-4d43-4853-8402-c300ca2d34ad/DP8VmlOG8m.json" background="transparent" speed="1" style="width: 300px; height: 300px" autoplay direction="1" mode="normal"></lottie-player>
+              </div>
+              <div class="col-lg-8">
+                  <div class="card">
+            <div class="card-body">
+              <h5 class="card-title fw-semibold mb-4">Send Ishare Bundles Instantly</h5>
+              <div class="card">
+                <div class="card-body">
+                  <form method="post">
+                      {% csrf_token %}
+                    <div class="mb-3">
+                      <label for="exampleInputEmail1" class="form-label">Phone Number / Receiver</label>
+                      <input name="receiver" type="number" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+                    </div>
+                    <div class="mb-3">
+                      <label for="exampleInputPassword1" class="form-label">Bundle Volume (in MB)</label>
+                      <input name="volume" type="number" class="form-control" id="exampleInputPassword1" placeholder="5000">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send</button>
+                  </form>
+                </div>
+              </div>
+{#              <h5 class="card-title fw-semibold mb-4">Disabled forms</h5>#}
+{#              <div class="card mb-0">#}
+{#                <div class="card-body">#}
+{#                  <form>#}
+{#                    <fieldset disabled>#}
+{#                      <legend>Disabled fieldset example</legend>#}
+{#                      <div class="mb-3">#}
+{#                        <label for="disabledTextInput" class="form-label">Disabled input</label>#}
+{#                        <input type="text" id="disabledTextInput" class="form-control" placeholder="Disabled input">#}
+{#                      </div>#}
+{#                      <div class="mb-3">#}
+{#                        <label for="disabledSelect" class="form-label">Disabled select menu</label>#}
+{#                        <select id="disabledSelect" class="form-select">#}
+{#                          <option>Disabled select</option>#}
+{#                        </select>#}
+{#                      </div>#}
+{#                      <div class="mb-3">#}
+{#                        <div class="form-check">#}
+{#                          <input class="form-check-input" type="checkbox" id="disabledFieldsetCheck" disabled>#}
+{#                          <label class="form-check-label" for="disabledFieldsetCheck">#}
+{#                            Can't check this#}
+{#                          </label>#}
+{#                        </div>#}
+{#                      </div>#}
+{#                      <button type="submit" class="btn btn-primary">Submit</button>#}
+{#                    </fieldset>#}
+{#                  </form>#}
+{#                </div>#}
+{#              </div>#}
+            </div>
+          </div>
+              </div>
+          </div>
+
+        </div>
+      </div>
+{% endblock content %}

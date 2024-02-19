@@ -1,0 +1,95 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modernize Free</title>
+    <script src="https://kit.fontawesome.com/74a104b829.js" crossorigin="anonymous"></script>
+  <link rel="shortcut icon" type="image/png" href="{% static 'assets/images/logos/favicon.png' %}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.datatables.net/v/bs/dt-2.0.0/fh-4.0.0/r-3.0.0/sb-1.7.0/sp-2.3.0/datatables.min.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="{% static 'assets/css/styles.min.css' %}" />
+
+    <style>
+    /* Override DataTables default alignment for numeric and date columns */
+    table.dataTable th.dt-type-numeric,
+    table.dataTable th.dt-type-date,
+    table.dataTable td.dt-type-numeric,
+    table.dataTable td.dt-type-date {
+        text-align: left !important;
+    }
+</style>
+</head>
+
+<body>
+  <!--  Body Wrapper -->
+  <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
+    data-sidebar-position="fixed" data-header-position="fixed">
+      {% include 'inc/sideNav.html' %}
+
+      <div class="body-wrapper">
+          {% include 'inc/header.html' %}
+
+          {% block content %}
+
+          {% endblock content %}
+       </div>
+  </div>
+
+  {% block scripts %}
+  {% endblock scripts %}
+  <script src="{% static 'assets/libs/jquery/dist/jquery.min.js' %}"></script>
+  <script src="{% static 'assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/js/sidebarmenu.js' %}"></script>
+  <script src="{% static 'assets/js/app.min.js' %}"></script>
+  <script src="{% static 'assets/libs/apexcharts/dist/apexcharts.min.js' %}"></script>
+  <script src="{% static 'assets/libs/simplebar/dist/simplebar.js' %}"></script>
+  <script src="{% static 'assets/js/dashboard.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <script src="https://cdn.datatables.net/v/bs/dt-2.0.0/fh-4.0.0/r-3.0.0/sb-1.7.0/sp-2.3.0/datatables.min.js"></script>
+
+  <script>
+        {% for msg in messages %}
+            {% if msg.tags == "success" %}
+            Swal.fire({
+                text: '{{ msg }}',
+                icon: 'success',
+                {#timer: 1000#}
+            })
+            {% elif msg.tags == "warning" %}
+            Swal.fire({
+                text: '{{ msg }}',
+                icon: 'info',
+                {#timer: 1500#}
+            })
+
+                {% elif msg.tags == "info" %}
+            Swal.fire({
+                text: '{{ msg }}',
+                icon: 'info',
+            })
+            {% else %}
+            Swal.fire({
+                text: '{{ msg }}',
+                icon: 'error',
+                {#timer: 1000#}
+            })
+            {% endif %}
+        {% endfor %}
+      </script>
+
+<script>
+          let table = $('#txnTable').DataTable({
+              "ordering": false,
+              responsive: true
+          });
+      </script>
+
+
+</body>
+
+</html>

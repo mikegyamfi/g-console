@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+      <div class="container-fluid">
+        <!--  Row 1 -->
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h3>Authentication Details</h3>
+            </div>
+          <div class="col-lg-6">
+            <div class="row">
+              <div class="col-lg-12">
+                <!-- Yearly Breakup -->
+                <div class="card overflow-hidden">
+                  <div class="card-body p-4">
+                    <h5 class="card-title mb-9 fw-semibold">Authentication Keys</h5>
+                    <div class="row align-items-center">
+                      <div class="col-8">
+                        <h6 class="fw-semibold mb-3">This page provides sensitive data crucial to your account security. Keep your keys safe</h6>
+                        <div class="d-flex align-items-center">
+                          <div class="me-4">
+{#                            <span class="round-8 bg-primary rounded-circle me-2 d-inline-block"></span>#}
+                            <span class="fs-2">Regenerate a new key if your account is compromised</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-4">
+                        <i class="fa fa-lock-open fa-5x text-primary"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12 d-flex align-items-stretch">
+            <div class="card w-100">
+              <div class="card-body p-4">
+                <h4 class="card-title fw-semibold mb-4">Key Management</h4>
+                  <h6>Bearer Token</h6>
+                  <p class="text-success">{{ token }}</p>
+                  <p class="font-italic"><em>This token is the only thing that can authorize a transaction through API Integration</em></p>
+
+                  <form action="" method="post">
+                      {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-primary">
+                      Generate Token
+                  </button>
+                  </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% include 'inc/footer.html' %}
+      </div>
+{% endblock content %}

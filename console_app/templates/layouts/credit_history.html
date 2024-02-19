@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+      <div class="container-fluid">
+        <!--  Row 1 -->
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h3>Credit History</h3>
+                  <span>View your recent account crediting history</span>
+            </div>
+        </div>
+        <div class="row">
+          <div class="col-12 d-flex align-items-stretch">
+            <div class="card w-100">
+              <div class="card-body p-4">
+                <h5 class="card-title fw-semibold mb-4">Credit History</h5>
+                <div class="table-responsive">
+                  <table class="table text-nowrap mb-0 align-middle">
+                    <thead class="text-dark fs-4">
+                      <tr>
+                        <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">Bundle Volume</h6>
+                        </th>
+                        <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">Status</h6>
+                        </th>
+                        <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">Date</h6>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {%  for txn in txns %}
+                      <tr>
+                        <td class="border-bottom-0">
+                            <h6 class="fw-semibold mb-1">{{ txn.amount_credited }}</h6>
+                        </td>
+                        <td class="border-bottom-0">
+                          <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-success rounded-3 fw-semibold">Completed</span>
+                          </div>
+                        </td>
+                        <td class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0 fs-4">{{ txn.date }}</h6>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+        {% include 'inc/footer.html' %}
+{% endblock content %}

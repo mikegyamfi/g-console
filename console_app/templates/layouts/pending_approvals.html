@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+      <div class="container-fluid">
+        <!--  Row 1 -->
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h3>Pending Approvals</h3>
+                  <span>Approve Accounts here</span>
+            </div>
+        </div>
+        <div class="row">
+          <div class="col-12 d-flex align-items-stretch">
+            <div class="card w-100">
+              <div class="card-body p-4">
+                <h5 class="card-title fw-semibold mb-4">Approvals</h5>
+                <div class="table-responsive">
+                  <table id="txnTable" class="table text-left align-left">
+                    <thead class="text-dark fs-4">
+                      <tr>
+                        <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">User</h6>
+                        </th>
+                        <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">Email</h6>
+                        </th>
+                        <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">Phone Number</h6>
+                        </th>
+                        <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">Business Name</h6>
+                        </th>
+                          <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">Action</h6>
+                        </th>
+                          <th class="border-bottom-0">
+                          <h6 class="fw-semibold mb-0">Action</h6>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {%  for approval in approvals %}
+                        {%  for profile in profiles %}
+                      <tr>
+                        <td class="border-bottom-0"><h6 class="fw-semibold mb-0">{{ approval.first_name }} {{ approval.last_name }}</h6></td>
+                        <td class="border-bottom-0">
+                            <h6 class="fw-semibold mb-1">{{ approval.email }}</h6>
+                        </td>
+                        <td class="border-bottom-0">
+                          <p class="mb-0 fw-normal">{{ profile.phone }}</p>
+                        </td>
+                      <td class="border-bottom-0">
+                          <p class="mb-0 fw-normal">{{ profile.business_name }}</p>
+                        </td>
+                        <td class="border-bottom-0">
+                          <a href="{% url 'approval_status' approval_id=approval.id app_status="True" %}" class="badge bg-success rounded-3 fw-semibold">Approve</a>
+                        </td>
+                      <td class="border-bottom-0">
+                          <a href="{% url 'approval_status' approval_id=approval.id app_status="False" %}" class="badge bg-danger rounded-3 fw-semibold">Deny</a>
+                        </td>
+                      </tr>
+                            {% endfor %}
+                    {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+        {% include 'inc/footer.html' %}
+{% endblock content %}
