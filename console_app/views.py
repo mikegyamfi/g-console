@@ -336,6 +336,9 @@ def crediting_page(request):
                 new_credit = models.CreditingHistory(user=user_credited, amount_credited=amount)
                 new_credit.save()
                 receiver_message = f"Your GoeSams console account has been successfully credited with {amount}MB.\nPrev Balance: {previous_balance}MB\nNew Balance:{user_profile_credited.bundle_balance}MB"
+                response1 = requests.get(
+                    f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{user_profile_credited.phone}&from=GEO_AT&sms={receiver_message}")
+                print(response1.text)
                 # quicksend_url = "https://uellosend.com/quicksend/"
                 # data = {
                 #     'api_key': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.=eyJkYXRhIjp7InVzZXJpZCI6MTU5MiwiYXBpU2VjcmV0IjoiaFY2YjNDcHR1PW9wQnB2IiwiaXNzdWVyIjoiVUVMTE9TRU5EIn19',
