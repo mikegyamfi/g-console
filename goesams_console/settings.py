@@ -25,7 +25,7 @@ TEMPLATE_DIR = BASE_DIR / 'console_app/templates'
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     'octopus-app-ki7j3.ondigitalocean.app',
