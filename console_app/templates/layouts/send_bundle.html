@@ -29,7 +29,7 @@
                       <label for="exampleInputPassword1" class="form-label">Bundle Volume (in MB)</label>
                       <input name="volume" type="number" class="form-control" id="exampleInputPassword1" placeholder="5000">
                     </div>
-                    <button type="submit" class="btn btn-primary">Send</button>
+                    <button type="submit" class="btn btn-primary send-btn">Send</button>
                   </form>
                 </div>
               </div>
@@ -70,3 +70,15 @@
         </div>
       </div>
 {% endblock content %}
+
+  {% block scripts %}
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("sendButton").addEventListener("click", function(event) {
+            let sendButton = event.target;
+            sendButton.disabled = true;
+            sendButton.textContent = "Sending...";
+        });
+    });
+</script>
+  {% endblock scripts %}
