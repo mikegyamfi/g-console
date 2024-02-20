@@ -28,7 +28,8 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'octopus-app-ki7j3.ondigitalocean.app'
+    'octopus-app-ki7j3.ondigitalocean.app',
+    'controller.geosams.com'
 ]
 
 
