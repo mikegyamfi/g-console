@@ -5,7 +5,7 @@ from console_app import models
 
 class NewTransactionAdmin(admin.ModelAdmin):
     list_per_page = 800
-    list_display = ["user", "receiver", "reference", "bundle_amount", "transaction_date",
+    list_display = ["user", "account_number", "reference", "bundle_amount", "transaction_date",
                     "transaction_status"]
     search_fields = ["receiver", 'reference', "bundle_amount"]
 
