@@ -301,7 +301,7 @@ def api_page(request):
                 print("did the pass")
                 pass
 
-            token_key = generate_tokenn(150)
+            token_key = generate_tokenn(40)
             print(token_key)
             token = Token.objects.create(user=user, key=token_key)
             messages.success(request, f"Token Generation Successful: {token.key}")
