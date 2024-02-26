@@ -292,17 +292,22 @@ def api_page(request):
     if request.method == "POST":
         try:
             user = models.CustomUser.objects.get(id=request.user.id)
+            print(user)
             try:
                 token = Token.objects.get(user=user)
                 token.delete()
+                print("deleted token")
             except Token.DoesNotExist:
+                print("did the pass")
                 pass
 
             token_key = generate_tokenn(150)
+            print(token_key)
             token = Token.objects.create(user=user, key=token_key)
-            messages.success(request, "Token Generation Successful")
+            messages.success(request, f"Token Generation Successful: {token.key}")
             return redirect('token_management')
-        except:
+        except Exception as e:
+            print(e)
             messages.error(request, "Something went wrong")
             return redirect('token_management')
     user_profile_data = models.CustomUser.objects.get(id=request.user.id)
