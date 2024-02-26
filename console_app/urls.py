@@ -30,7 +30,9 @@ urlpatterns = [
 
     # ========================================================================================================
     path('api/v1/new_transaction', api_views.new_transaction, name='new_transaction'),
-    path('api/v1/transaction_detail', api_views.transaction_detail, name='transaction_detail'),
+    path('api/v1/transaction_detail/<str:reference>', api_views.transaction_detail, name='transaction_detail'),
+    path('api/v1/transaction_detail', api_views.null_transaction_query, name='null_transaction_detail'),
+    path('api/v1/user_balance', api_views.user_balance, name='user_balance'),
     path('api/v1/all_transactions', api_views.get_all_transactions, name='all_transactions'),
     path('api/v1/generate_token', api_views.generate_token, name='generate_token'),
     path('token_management', views.api_page, name='token_management')

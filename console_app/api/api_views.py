@@ -125,26 +125,27 @@ def new_transaction(request):
                     if send_bundle_response != "bad response":
                         print("good response")
                         if send_bundle_response["data"]["request_status_code"] == "200" or send_bundle_response["request_message"] == "Successful":
+                            user_profile.bundle_balance -= float(bundle_volume)
+                            user_profile.save()
                             new_txn = models.NewTransaction.objects.create(
                                 user=request.user,
-                                bundle_number=phone_number,
-                                offer=f"{bundle_volume}MB",
+                                account_number=phone_number,
+                                bundle_amount=bundle_volume,
                                 reference=reference,
                                 transaction_status="Completed"
                             )
                             new_txn.save()
-                            user_profile.bundle_balance -= float(bundle_volume)
                             user.save()
-                            receiver_message = f"Your bundle purchase has been completed successfully. {bundle_volume}MB has been credited to you by {request.user.phone}.\nReference: {reference}\n"
+                            receiver_message = f"Your bundle purchase has been completed successfully. {bundle_volume}MB has been credited to you by {user_profile.phone}.\nReference: {reference}\n"
                             sms_message = f"Hello @{request.user.username}. Your bundle purchase has been completed successfully. {bundle_volume}MB has been credited to {phone_number}.\nReference: {reference}\nCurrent Wallet Balance: {user_profile.bundle_balance}\nThank you for using Geosams.\n\nGeosams"
 
-                            response1 = requests.get(
-                                f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{request.user.phone}&from=GEO_AT&sms={sms_message}")
-                            print(response1.text)
+                            # response1 = requests.get(
+                            #     f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{user_profile.phone}&from=GEO_AT&sms={sms_message}")
+                            # print(response1.text)
 
-                            response2 = requests.get(
-                                f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to={phone_number}&from=GEO_AT&sms={receiver_message}")
-                            print(response2.text)
+                            # response2 = requests.get(
+                            #     f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to={phone_number}&from=GEO_AT&sms={receiver_message}")
+                            # print(response2.text)
                             return Response(
                                 data={"status": "Success",
                                       "message": "Transaction was completed successfully",
@@ -153,20 +154,20 @@ def new_transaction(request):
                         else:
                             new_txn = models.NewTransaction.objects.create(
                                 user=request.user,
-                                bundle_number=phone_number,
-                                offer=f"{bundle_volume}MB",
+                                account_number=phone_number,
+                                bundle_amount=bundle_volume,
                                 reference=reference,
                                 transaction_status="Failed"
                             )
                             new_txn.save()
                             return Response(
-                                data={"status": "Incomplete",
+                                data={"status": "Failed",
                                       "message": "Something went wrong on our end. Try again later",
                                       "reference": reference},
                                 status=status.HTTP_503_SERVICE_UNAVAILABLE)
                 else:
                     return Response(
-                        data={"code": "0001", "status": "Failed", "error": "Body error",
+                        data={"status": "Failed", "error": "Body error",
                               "message": "Body Parameters set not valid. Check and try again."},
                         status=status.HTTP_400_BAD_REQUEST)
             except Token.DoesNotExist:
@@ -175,123 +176,92 @@ def new_transaction(request):
             return Response({'error': 'Invalid Header Provided.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([BearerTokenAuthentication])
-def transaction_detail(request):
+def transaction_detail(request, reference):
+    authorization_header = request.headers.get('Authorization')
+    if authorization_header:
+        auth_type, token = authorization_header.split(' ')
+        if auth_type == 'Bearer':
+            try:
+                token_obj = Token.objects.get(key=token)
+                user = token_obj.user
 
-    def post(self, request, reference):
-        response = ValidateAPIKeysView().post(request)
-        print(response.data)
+                user_profile = models.UserProfile.objects.get(user=user)
 
-        if response.data["valid"]:
-            api_key = request.headers.get("api-key")
-            print(api_key)
-            if api_key:
-                print("yhp")
-                user = CustomUser.objects.get(api_key=api_key)
-            else:
-                print("nope")
-                print("using this instead")
-                user = CustomUser.objects.get(id=request.user.id)
-                print(user)
-            wanted_transaction = NewTransaction.objects.filter(reference=reference, user=user).first()
-            print(wanted_transaction)
-            if wanted_transaction:
-                print(wanted_transaction.batch_id)
-                batch_id = wanted_transaction.batch_id
-                url = f"https://backend.boldassure.net:445/live/api/context/business/airteltigo-gh/ishare/tranx-status/{batch_id}"
-
-                payload = {}
-                headers = {
-                    'Authorization': config("BEARER_TOKEN")
-                }
-
-                response = requests.request("GET", url, headers=headers, data=payload)
-                data = response.json()
-                print(data)
                 try:
-                    code = data["flexiIshareTranxStatus"]["flexiIshareTranxStatusResult"]["apiResponse"]["responseCode"]
-                except:
-                    return Response(data={"code": "0001", "error": "Query Failed", "status": "Failed",
-                                          "message": "Could not query transaction"}, status=status.HTTP_200_OK)
+                    referenced_txn = models.NewTransaction.objects.get(reference=reference, user=user)
+                    txn_status = referenced_txn.transaction_status
+                    txn_date = referenced_txn.transaction_date
+                    receiver = referenced_txn.account_number
+                    data_volume = referenced_txn.bundle_amount
 
-                if code == "200":
-                    message = data["flexiIshareTranxStatus"]["flexiIshareTranxStatusResult"]["apiResponse"][
-                        "responseMsg"]
-                    shared_bundle = data["flexiIshareTranxStatus"]["flexiIshareTranxStatusResult"]["sharedBundle"]
-                    recipient = \
-                        data["flexiIshareTranxStatus"]["flexiIshareTranxStatusResult"]["recipientDetails"][
-                            "recipientParams"][
-                            0]["recipientMsisdn"]
-                    recipient_message = \
-                        data["flexiIshareTranxStatus"]["flexiIshareTranxStatusResult"]["recipientDetails"][
-                            "recipientParams"][
-                            0]["responseMsg"]
-                    data_response = {
-                        "api_response": {
-                            "message": message,
-                            "shared_bundle": shared_bundle,
-                            "recipient": recipient,
-                            "recipient_bundle_status": recipient_message},
-                        "code": "0000",
-                        "reference": reference,
-                        "batch_id": batch_id,
-                        "query_status": "Success"
-                    }
-                    return Response(data=data_response, status=status.HTTP_200_OK)
-            else:
-                return Response(data={"code": "0001", "status": "Failed", "error": "Transaction not found",
-                                      "message": "The reference entered matches no transaction"},
-                                status=status.HTTP_200_OK)
-            if code == "204":
-                return Response(data={"code": "0001", "status": "Failed", "error": "Not Found",
-                                      "message": "No record for this transaction. Check reference and try again"},
-                                status=status.HTTP_200_OK)
-            if code == "205":
-                recipient = \
-                    data["flexiIshareTranxStatus"]["flexiIshareTranxStatusResult"]["recipientDetails"][
-                        "recipientParams"][
-                        0][
-                        "recipientMsisdn"]
-                return Response(data={"code": "0001", "status": "Failed", "error": "Invalid Recipient",
-                                      "message": "The recipient number provided was invalid", "recipient": recipient},
-                                status=status.HTTP_200_OK)
-        else:
-            return Response(data={"code": "0001", "error": "Authentication error",
-                                  "status": "Failed",
-                                  "message": "Unable to authenticate using Authentication keys. Check and try again."},
-                            status=status.HTTP_401_UNAUTHORIZED)
+                    if txn_status == 'Completed':
+                        return Response(
+                            data={"status": "Success",
+                                  "message": "Transaction was completed successfully",
+                                  "reference": reference,
+                                  "date_created": txn_date,
+                                  "receiver": receiver,
+                                  "data_volume": data_volume
+                                  },
+                            status=status.HTTP_200_OK)
+                    else:
+                        return Response(
+                            data={"status": "Incomplete",
+                                  "message": "Transaction was not completed",
+                                  "reference": reference,
+                                  "date_created": txn_date,
+                                  "receiver": receiver,
+                                  "data_volume": data_volume
+                                  },
+                            status=status.HTTP_200_OK)
+                except models.NewTransaction.DoesNotExist:
+                    return Response({'error': 'No Transaction with reference provided.'}, status=status.HTTP_404_NOT_FOUND)
+
+            except Token.DoesNotExist or models.CustomUser.DoesNotExist or models.UserProfile.DoesNotExist:
+                return Response({'error': 'Token or User does not exist.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([BearerTokenAuthentication])
 def user_balance(request):
-    response = ValidateAPIKeysView().post(request)
-    data = response.data
+    authorization_header = request.headers.get('Authorization')
+    if authorization_header:
+        auth_type, token = authorization_header.split(' ')
+        if auth_type == 'Bearer':
+            try:
+                token_obj = Token.objects.get(key=token)
+                user = token_obj.user
 
-    if data["valid"]:
-        try:
-            user = models.CustomUser.objects.get(api_key=request.headers.get("api-key"))
-        except models.CustomUser.DoesNotExist:
-            return Response(data={"code": "0001", "message": "User not found"}, status=status.HTTP_200_OK)
-        user_profile = models.UserProfile.objects.get(user=user)
-        print(user_profile)
-        user_bundle_balance = user_profile.bundle_amount if user_profile.bundle_amount else 0
-        return Response(
-            data={"code": "0000", "user": f"{user.first_name} {user.last_name}", "bundle_balance": user_bundle_balance},
-            status=status.HTTP_200_OK)
-    else:
-        return Response(data={"code": "0001", "error": "Authentication error",
-                              "status": "Failed",
-                              "message": "Unable to authenticate using Authentication keys. Check and try again."},
-                        status=status.HTTP_401_UNAUTHORIZED)
+                user_profile = models.UserProfile.objects.get(user=user)
+
+                user_balance_left = user_profile.bundle_balance
+
+                if user_balance_left or user_balance_left is not None:
+                    return Response(
+                        data={"bundle_balance": f"{user_balance_left}MB",
+                              "status": "Success",
+                              },
+                        status=status.HTTP_200_OK)
+                else:
+                    return Response(
+                        data={
+                              "status": "Query Unsuccessful",
+                              },
+                        status=status.HTTP_200_OK)
+
+            except Token.DoesNotExist or models.CustomUser.DoesNotExist or models.UserProfile.DoesNotExist:
+                return Response({'error': 'Token or User does not exist.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([BearerTokenAuthentication])
 def null_transaction_query(request):
-    return Response(data={"code": "0001", "status": "Failed", "error": "Null Reference",
+    return Response(data={"status": "Failed", "error": "Null Reference",
                           "message": "Provide a valid reference to query"}, status=status.HTTP_200_OK)
 
 

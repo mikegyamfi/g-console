@@ -105,6 +105,9 @@ def send_bundle_page(request):
         receiver = request.POST.get("receiver")
         amount = int(request.POST.get("volume"))
 
+        if len(str(receiver)) != 10:
+            messages.error(request, "Phone number must be 10 digits")
+            return redirect('send_bundle_page')
         print(receiver)
         print(amount)
 
