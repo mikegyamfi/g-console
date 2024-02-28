@@ -137,7 +137,7 @@ def new_transaction(request):
                             new_txn.save()
                             user.save()
                             receiver_message = f"Your bundle purchase has been completed successfully. {bundle_volume}MB has been credited to you by {user_profile.phone}.\nReference: {reference}\n"
-                            sms_message = f"Hello @{request.user.username}. Your bundle purchase has been completed successfully. {bundle_volume}MB has been credited to {phone_number}.\nReference: {reference}\nCurrent Wallet Balance: {user_profile.bundle_balance}\nThank you for using Geosams.\n\nGeosams"
+                            sms_message = f"Hello @{request.user.username}. Your bundle purchase has been completed successfully. {bundle_volume}MB has been credited to {phone_number}.\nReference: {reference}\nCurrent Wallet Balance: {user_profile.bundle_balance}\n"
 
                             # response1 = requests.get(
                             #     f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{user_profile.phone}&from=GEO_AT&sms={sms_message}")

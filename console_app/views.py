@@ -147,8 +147,10 @@ def send_bundle_page(request):
                     current_user.bundle_balance -= float(amount)
                     current_user.save()
                     receiver_message = f"Your bundle purchase has been completed successfully. {amount}MB has been credited to you by {current_user.phone}.\nReference: {reference}\n"
-                    sms_message = f"Hello @{request.user.username}. Your bundle purchase has been completed successfully. {amount}MB has been credited to {receiver}.\nReference: {reference}\nCurrent Wallet Balance: {current_user.bundle_balance}\nThank you for using Geosams.\n\nGeosams"
+                    sms_message = f"Hello @{request.user.username}. Your bundle purchase has been completed successfully. {amount}MB has been credited to {receiver}.\nReference: {reference}\nCurrent Wallet Balance: {current_user.bundle_balance}"
 
+                    print(receiver_message)
+                    print(sms_message)
                     try:
                         response1 = requests.get(
                             f"https://sms.arkesel.com/sms/api?action=send-sms&api_key={current_user.sms_api}&to=0{current_user.phone}&from={current_user.business_name}&sms={sms_message}")
