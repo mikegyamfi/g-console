@@ -153,11 +153,11 @@ def send_bundle_page(request):
                     print(sms_message)
                     try:
                         response1 = requests.get(
-                            f"https://sms.arkesel.com/sms/api?action=send-sms&api_key={current_user.sms_api}&to=0{current_user.phone}&from={current_user.business_name}&sms={sms_message}")
+                            f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{current_user.phone}&from={current_user.business_name}&sms={sms_message}")
                         print(response1.text)
 
                         response2 = requests.get(
-                            f"https://sms.arkesel.com/sms/api?action=send-sms&api_key={current_user.sms_api}&to={receiver}&from={current_user.business_name}&sms={receiver_message}")
+                            f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to={receiver}&from={current_user.business_name}&sms={receiver_message}")
                         print(response2.text)
                     except:
                         messages.success(request, "Transaction was completed successfully")
