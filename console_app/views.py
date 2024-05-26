@@ -246,7 +246,7 @@ def loginpage(request):
 @login_required(login_url='login')
 def pending_approvals(request):
     if request.user.is_staff or request.user.is_superuser:
-        approvals = models.CustomUser.objects.filter(account_approved=False).reverse()
+        approvals = models.CustomUser.objects.filter(account_approved=False).reverse()[:100]
         for approval in approvals:
             print(approval)
         profiles = [models.UserProfile.objects.get(user=approval) for approval in approvals]
@@ -373,7 +373,7 @@ def crediting_page(request):
 
 @login_required(login_url='login')
 def credit_history(request):
-    credits_txn = models.CreditingHistory.objects.filter(user=request.user).order_by('date').reverse()
+    credits_txn = models.CreditingHistory.objects.filter(user=request.user).order_by('date').reverse()[:200]
     user_profile_data = models.UserProfile.objects.filter(user=request.user).first()
     context = {'txns': credits_txn, 'data': user_profile_data}
     return render(request, 'layouts/credit_history.html', context=context)
@@ -407,7 +407,7 @@ def query_transaction(request):
 
 @login_required(login_url='login')
 def all_transactions(request):
-    all_users_transactions = models.NewTransaction.objects.all().order_by("transaction_date").reverse()
+    all_users_transactions = models.NewTransaction.objects.all().order_by("transaction_date").reverse()[:8000]
     context = {"txns": all_users_transactions}
     return render(request, "layouts/admin-all-txns.html", context=context)
 
