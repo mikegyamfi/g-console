@@ -3,6 +3,8 @@ import re
 
 import requests
 from decouple import config
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
 
 
 def send_bundle(user, receiver, bundle_amount, reference):
@@ -58,7 +60,14 @@ def send_bundle(user, receiver, bundle_amount, reference):
     ]
     headers = {}
 
-    response = requests.request("POST", url, headers=headers, data=payload, files=files)
+    session = requests.Session()
+    retry = Retry(connect=30, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('https://', adapter)
+
+    response = session.post(url, headers=headers, data=payload)
+
+    # response = requests.request("POST", url, headers=headers, data=payload, files=files)
     json_match = re.search(r'getBalance(.+)}', response.text)
 
     if json_match:
