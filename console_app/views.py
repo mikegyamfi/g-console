@@ -482,12 +482,12 @@ def password_reset_request(request):
                 c = {
                     "name": user.first_name,
                     "email": user.email,
-                    'domain': 'localhost:8000',
+                    'domain': 'controller.geosams.com',
                     'site_name': 'Geosams Console',
                     "uid": urlsafe_base64_encode(force_bytes(user.pk)),
                     "user": user,
                     'token': default_token_generator.make_token(user),
-                    'protocol': 'http',
+                    'protocol': 'https',
                 }
                 email = render_to_string(email_template_name, c)
                 requests.get(
