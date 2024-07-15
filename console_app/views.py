@@ -205,6 +205,9 @@ def register(request):
             business_name = form.cleaned_data.get("business_name")
             user = models.CustomUser.objects.get(username=username)
             user.user_id = f"GS{secrets.token_hex(3)}".upper()
+            if models.UserProfile.objects.filter(user=user).exists():
+                messages.success(request, "Sign Up Successful. Your account creation has been submitted for approval.")
+                return redirect('login')
             user_profile_data = models.UserProfile.objects.create(
                 user=user,
                 phone=phone_number,
@@ -247,8 +250,6 @@ def loginpage(request):
 def pending_approvals(request):
     if request.user.is_staff or request.user.is_superuser:
         approvals = models.CustomUser.objects.filter(account_approved=False).reverse()[:100]
-        for approval in approvals:
-            print(approval)
         profiles = [models.UserProfile.objects.get(user=approval) for approval in approvals]
         context = {'approvals': approvals, 'profiles': profiles}
         return render(request, "layouts/pending_approvals.html", context=context)
