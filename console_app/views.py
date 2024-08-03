@@ -250,7 +250,13 @@ def loginpage(request):
 def pending_approvals(request):
     if request.user.is_staff or request.user.is_superuser:
         approvals = models.CustomUser.objects.filter(account_approved=False).reverse()[:100]
-        profiles = [models.UserProfile.objects.get(user=approval) for approval in approvals]
+        profiles_print = [print(approval) for approval in approvals]
+        print(profiles_print)
+        profiles = []
+        for approval in approvals:
+            print(approval)
+            profiles.append(models.UserProfile.objects.get(user=approval))
+        # profiles = [models.UserProfile.objects.get(user=approval) for approval in approvals]
         context = {'approvals': approvals, 'profiles': profiles}
         return render(request, "layouts/pending_approvals.html", context=context)
     else:
