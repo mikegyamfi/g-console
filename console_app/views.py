@@ -205,7 +205,7 @@ def register(request):
             business_name = form.cleaned_data.get("business_name")
             user = models.CustomUser.objects.get(username=username)
             user.user_id = f"GS{secrets.token_hex(3)}".upper()
-            if models.UserProfile.objects.filter(user=user).exists():
+            if models.UserProfile.objects.filter(user=user, phone=phone_number, business_name=business_name).exists():
                 messages.success(request, "Sign Up Successful. Your account creation has been submitted for approval.")
                 return redirect('login')
             user_profile_data = models.UserProfile.objects.create(
