@@ -499,8 +499,9 @@ def password_reset_request(request):
                     'protocol': 'https',
                 }
                 email = render_to_string(email_template_name, c)
-                requests.get(
+                response = requests.get(
                     f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{current_user.phone}&from=GEO_AT&sms={email}")
+                print(response)
                 return redirect("/password_reset/done/")
     password_reset_form = PasswordResetForm()
     return render(request=request, template_name="password/password_reset.html",
