@@ -24,11 +24,11 @@ class CustomUser(AbstractUser):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    business_name = models.CharField(max_length=100, null=True, blank=True, unique=True)
+    business_name = models.CharField(max_length=100, null=False, blank=False, default="Business")
     sms_sender_name = models.CharField(max_length=100, null=False, blank=False, default="Bundle")
-    phone = models.PositiveIntegerField(null=True, blank=True, unique=True)
+    phone = models.PositiveIntegerField(null=True, blank=True)
     bundle_balance = models.PositiveBigIntegerField(null=True, blank=True)
-    sms_api = models.CharField(max_length=250, null=True, blank=True, unique=True)
+    sms_api = models.CharField(max_length=250, null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username}"
