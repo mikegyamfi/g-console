@@ -25,6 +25,7 @@ urlpatterns = [
     path('approval_status/<int:approval_id>/<str:app_status>', views.change_approval_status, name='approval_status'),
     path('bundle-amount-graph/', views.bundle_amount_graph, name='bundle_amount_graph'),
     path('account_recharge', views.topup_request, name='topup_request'),
+    path('controller_webhook', views.controller_webhook, name='controller_webhook'),
 
     path('login/', views.loginpage, name='login'),
     path('sign-up', views.register, name='register'),
