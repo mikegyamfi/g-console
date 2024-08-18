@@ -22,6 +22,14 @@ class CustomUser(AbstractUser):
         return self.username
 
 
+class ServiceStatus(models.Model):
+    service_name = models.CharField(max_length=100, null=False, blank=False)
+    service_status = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.service_name
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     business_name = models.CharField(max_length=100, null=False, blank=False, default="Business")
@@ -57,6 +65,12 @@ class CreditingHistory(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     amount_credited = models.FloatField(null=False, blank=False)
     date = models.DateTimeField(auto_now_add=True)
+    credited = models.BooleanField(default=False)
+    choices = (
+        ("Paystack", "Paystack"),
+        ("Manual", "Manual")
+    )
+    channel = models.CharField(max_length=100, null=False, blank=False, choices=choices, default="Manual")
 
     def __str__(self):
         return self.user.username + " " + str(self.amount_credited)
@@ -68,3 +82,12 @@ class Notice(models.Model):
     is_active = models.BooleanField(default=True)
 
 
+class BundlePrice(models.Model):
+    price = models.FloatField(null=False, blank=False)
+    bundle_volume = models.FloatField(null=False, blank=False)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        if self.bundle_volume >= 1000:
+            return f"GHS{self.price} - {self.bundle_volume / 1000}GB"
+        return f"GHS{self.price} - {self.bundle_volume}MB"

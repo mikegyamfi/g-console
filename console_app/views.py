@@ -1,4 +1,7 @@
 import calendar
+import hashlib
+import hmac
+import json
 import random
 import string
 from datetime import datetime, timedelta
@@ -26,6 +29,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.urls import reverse_lazy
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
@@ -353,6 +357,8 @@ def crediting_page(request):
                 user_profile_credited.bundle_balance += float(amount)
                 user_profile_credited.save()
                 new_credit = models.CreditingHistory(user=user_credited, amount_credited=amount)
+                new_credit.credited = True
+                new_credit.channel = "Manual"
                 new_credit.save()
                 receiver_message = f"Your GoeSams console account has been successfully credited with {amount}MB.\nPrev Balance: {previous_balance}MB\nNew Balance:{user_profile_credited.bundle_balance}MB"
                 response1 = requests.get(
@@ -454,7 +460,8 @@ def bundle_amount_graph(request):
 
             selected_month_name = calendar.month_name[selected_month]
 
-            bundle_amounts, user_with_highest_bundle_amount, highest_bundle_amount = get_bundle_amount_by_user_for_month(selected_year, selected_month)
+            bundle_amounts, user_with_highest_bundle_amount, highest_bundle_amount = get_bundle_amount_by_user_for_month(
+                selected_year, selected_month)
 
             # Format data for plotting
             usernames = [bundle['user__username'] for bundle in bundle_amounts]
@@ -464,7 +471,8 @@ def bundle_amount_graph(request):
             context = {
                 'usernames': usernames,
                 'total_bundle_amounts': total_bundle_amounts,
-                'user_with_highest_bundle_amount': models.CustomUser.objects.get(username=user_with_highest_bundle_amount['user__username']),
+                'user_with_highest_bundle_amount': models.CustomUser.objects.get(
+                    username=user_with_highest_bundle_amount['user__username']),
                 'highest_bundle_amount': highest_bundle_amount / 1000,
                 'selected_month': selected_month,
                 'selected_month_name': selected_month_name
@@ -506,3 +514,148 @@ def password_reset_request(request):
     password_reset_form = PasswordResetForm()
     return render(request=request, template_name="password/password_reset.html",
                   context={"password_reset_form": password_reset_form})
+
+
+@login_required(login_url='login')
+def topup_request(request):
+    service = models.ServiceStatus.objects.get(service_name="topup")
+    if service.service_status:
+        user = models.CustomUser.objects.get(id=request.user.id)
+        form = forms.BundleForm()
+        if request.method == "POST":
+            form = forms.BundleForm(request.POST)
+            if form.is_valid():
+                offer = form.cleaned_data['offers']
+                bundle_volume = offer.bundle_volume
+                price = offer.price
+
+                print(bundle_volume)
+
+                url = "https://api.paystack.co/transaction/initialize"
+
+                fields = {
+                    'email': user.email,
+                    'amount': int(price) * 100,
+                    'callback_url': "https://controller.geosams.com",
+                    'metadata': {
+                        "db_id": user.id,
+                        "bundle_package": bundle_volume,
+                        'channel': "controller_topup",
+                        'real_amount': price
+                    }
+                }
+
+                headers = {
+                    "Authorization": config("PAYSTACK_KEY"),
+                    "Cache-Control": "no-cache"
+                }
+
+                response = requests.post(url, json=fields, headers=headers)
+
+                data = response.json()
+                print(data)
+                try:
+                    url = data['data']['authorization_url']
+                    return redirect(url)
+                except Exception as e:
+                    print(e)
+                    messages.info(request, 'Something went wrong')
+                    return redirect('topup_request')
+
+        context = {
+            'form': form
+        }
+        return render(request, "layouts/topup_request.html", context=context)
+    else:
+        messages.info(request, "Top up service is not active")
+        return redirect('home')
+
+
+@csrf_exempt
+def controller_webhook(request):
+    if request.method == "POST":
+        paystack_secret_key = config("PAYSTACK_SECRET_KEY")
+        # print(paystack_secret_key)
+        payload = json.loads(request.body)
+
+        paystack_signature = request.headers.get("X-Paystack-Signature")
+
+        if not paystack_secret_key or not paystack_signature:
+            return HttpResponse(status=400)
+
+        computed_signature = hmac.new(
+            paystack_secret_key.encode('utf-8'),
+            request.body,
+            hashlib.sha512
+        ).hexdigest()
+
+        if computed_signature == paystack_signature:
+            print("yes")
+            print(payload.get('data'))
+            r_data = payload.get('data')
+            print(r_data.get('metadata'))
+            print(payload.get('event'))
+            if payload.get('event') == 'charge.success':
+                metadata = r_data.get('metadata')
+                db_id = metadata.get('db_id')
+                referer = metadata.get('referrer')
+                print(referer)
+                if referer != "https://controller.geosams.com/account_recharge":
+                    print("invalid referrer")
+                    return HttpResponse(status=200)
+                print(db_id)
+                # offer = metadata.get('offer')
+                user = models.CustomUser.objects.get(id=int(db_id))
+                user_profile = models.UserProfile.objects.get(user=user)
+                print(user)
+                channel = metadata.get('channel')
+                real_amount = metadata.get('real_amount')
+                reference = r_data.get('reference')
+                print(real_amount)
+
+                if channel == "controller_topup":
+                    print("topupppppppppppp")
+                    topup_amount = metadata.get('real_amount')
+
+                    if models.CreditingHistory.objects.filter(user=user, amount_credited=real_amount,
+                                                              credited=True).exists():
+                        return HttpResponse(status=200)
+
+                    bundle_volume = models.BundlePrice.objects.get(price=topup_amount).bundle_volume
+                    print(bundle_volume)
+
+                    print(user_profile.bundle_balance)
+                    user_profile.bundle_balance += bundle_volume
+                    user_profile.save()
+
+                    new_history = models.CreditingHistory.objects.create(user=user, credited=True, amount_credited=bundle_volume, channel="Paystack")
+                    new_history.save()
+
+                    sms_headers = {
+                        'Authorization': 'Bearer 1317|sCtbw8U97Nwg10hVbZLBPXiJ8AUby7dyozZMjJpU',
+                        'Content-Type': 'application/json'
+                    }
+
+                    sms_url = 'https://webapp.usmsgh.com/api/sms/send'
+                    sms_message = f"Your Geosams controller wallet has been credited with {bundle_volume}MB.\nReference: {reference}\n"
+
+                    sms_body = {
+                        'recipient': f"233{user.phone}",
+                        'sender_id': 'GH DATA',
+                        'message': sms_message
+                    }
+                    try:
+                        response1 = requests.get(
+                            f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{user_profile.phone}&from=GEO_AT&sms={sms_message}")
+                        print(response1.text)
+                        return HttpResponse(status=200)
+                    except:
+                        return HttpResponse(status=200)
+                else:
+                    return HttpResponse(status=200)
+            else:
+                return HttpResponse(status=200)
+        else:
+            return HttpResponse(status=401)
+    else:
+        return HttpResponse(status=200)

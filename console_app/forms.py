@@ -42,3 +42,11 @@ class CreditingForm(forms.ModelForm):
     class Meta:
         model = models.CreditingHistory
         fields = ['user', 'credit_amount']
+
+
+class BundleForm(forms.Form):
+    offers = forms.ModelChoiceField(queryset=models.BundlePrice.objects.filter(active=True).order_by('price'), to_field_name='price', empty_label=None,
+                                    widget=forms.Select(attrs={'class': 'form-control'}))
+
+
+
