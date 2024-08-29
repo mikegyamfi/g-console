@@ -221,7 +221,8 @@ def register(request):
             user.save()
             if models.UserProfile.objects.filter(user=user).exists():
                 return redirect('login')
-            user_profile_data.save()
+            else:
+                user_profile_data.save()
             messages.success(request, "Sign Up Successful. Your account creation has been submitted for approval.")
             return redirect('login')
     context = {'form': form}
