@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.tokens import default_token_generator
-from django.db.models import Sum, Max
+from django.db.models import Sum, Max, ExpressionWrapper, F, FloatField
 from django.http import HttpResponse
 from django.shortcuts import render
 
@@ -41,6 +41,62 @@ from console_app.forms import CustomUserForm
 # Create your views here.
 @login_required(login_url='login')
 def home(request):
+    if request.method == 'POST':
+        if request.user.is_superuser:
+            amount_per_gb = request.POST['amount_per_gb']
+            total_bundle_in_gb = models.UserProfile.objects.aggregate(
+                total_gb=Sum(
+                    ExpressionWrapper(
+                        F('bundle_balance') / 1024.0,
+                        output_field=FloatField()
+                    )
+                )
+            )['total_gb']
+
+            total_value = float(total_bundle_in_gb) * float(amount_per_gb) if total_bundle_in_gb else 0
+            print(total_value)
+
+            new_generated_total = models.GeneratedWalletTotal.objects.create(amount=total_value)
+            new_generated_total.save()
+            user_profile_data = models.UserProfile.objects.filter(user=request.user).first()
+            print(user_profile_data.bundle_balance)
+            current_month = datetime.now().month
+            current_month_text = datetime.now().strftime('%B')
+            most_recent_credit_history = models.CreditingHistory.objects.filter(user=request.user).order_by('-date').first()
+            current_year = datetime.now().year
+            transactions_count = models.NewTransaction.objects.filter(user=request.user).count()
+            total_bundle_volume = models.NewTransaction.objects.filter(transaction_date__year=current_year,
+                                                                       transaction_date__month=current_month,
+                                                                       user=request.user) \
+                .aggregate(total_bundle_volume=Sum('bundle_amount')) \
+                .get('total_bundle_volume', 0)
+            thirty_days_ago = timezone.now() - timezone.timedelta(days=30)
+            most_recent_5_txns = models.NewTransaction.objects.filter(user=request.user).order_by('-transaction_date')[:5]
+
+            daily_totals = models.NewTransaction.objects.filter(transaction_date__gte=thirty_days_ago, user=request.user) \
+                .values('transaction_date__date') \
+                .annotate(total_bundle=Sum('bundle_amount'))
+
+            # Organize the data for plotting
+            dates = [daily_total['transaction_date__date'] for daily_total in daily_totals]
+            formatted_dates = [date.strftime('%d %b') for date in dates]
+            totals = [daily_total['total_bundle'] for daily_total in daily_totals]
+            context = {
+                'data': user_profile_data,
+                'count': transactions_count,
+                'total_for_month': total_bundle_volume,
+                'month': current_month_text,
+                'year': current_year,
+                'recent_credit': most_recent_credit_history,
+                'dates': formatted_dates,
+                'totals': totals,
+                'txns': most_recent_5_txns,
+                'balance': user_profile_data.bundle_balance / 1000,
+                'total_money': round(total_value, 2)
+            }
+            return render(request, 'layouts/index.html', context=context)
+        else:
+            return redirect('home')
     user_profile_data = models.UserProfile.objects.filter(user=request.user).first()
     print(user_profile_data.bundle_balance)
     current_month = datetime.now().month

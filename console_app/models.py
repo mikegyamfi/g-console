@@ -91,3 +91,11 @@ class BundlePrice(models.Model):
         if self.bundle_volume >= 1000:
             return f"GHS{self.price} - {self.bundle_volume / 1000}GB"
         return f"GHS{self.price} - {self.bundle_volume}MB"
+
+
+class GeneratedWalletTotal(models.Model):
+    amount = models.FloatField(null=False, blank=False)
+    date_generated = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.amount} - {self.date_generated}"
