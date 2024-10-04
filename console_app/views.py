@@ -259,28 +259,35 @@ def register(request):
     if request.method == 'POST':
         form = CustomUserForm(request.POST)
         if form.is_valid():
-            form.save()
+            # Create or get the user
+            user = form.save()
             username = form.cleaned_data.get("username")
             phone_number = form.cleaned_data.get("phone")
             business_name = form.cleaned_data.get("business_name")
-            user = models.CustomUser.objects.get(username=username)
+
+            # Generate a user_id and save it to the user model
             user.user_id = f"GS{secrets.token_hex(3)}".upper()
-            if models.UserProfile.objects.filter(user=user, phone=phone_number, business_name=business_name).exists():
-                messages.success(request, "Sign Up Successful. Your account creation has been submitted for approval.")
-                return redirect('login')
-            user_profile_data = models.UserProfile.objects.create(
-                user=user,
-                phone=phone_number,
-                business_name=business_name,
-                bundle_balance=0
-            )
             user.save()
-            if models.UserProfile.objects.filter(user=user).exists():
-                return redirect('login')
+
+            # Check if a UserProfile already exists for this user before creating a new one
+            profile, created = models.UserProfile.objects.get_or_create(
+                user=user,
+                defaults={
+                    'phone': phone_number,
+                    'business_name': business_name,
+                    'bundle_balance': 0
+                }
+            )
+
+            if created:
+                # The profile was newly created
+                messages.success(request, "Sign Up Successful. Your account creation has been submitted for approval.")
             else:
-                user_profile_data.save()
-            messages.success(request, "Sign Up Successful. Your account creation has been submitted for approval.")
+                # The profile already exists
+                messages.info(request, "Sign Up Successful. Your profile already exists.")
+
             return redirect('login')
+
     context = {'form': form}
     return render(request, 'auth/authentication-register.html', context=context)
 
