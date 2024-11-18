@@ -86,96 +86,160 @@ def transactions(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-@authentication_classes([BearerTokenAuthentication])
+@authentication_classes([TokenAuthentication])  # Use your custom BearerTokenAuthentication if different
 def new_transaction(request):
-    authorization_header = request.headers.get('Authorization')
-    if authorization_header:
-        auth_type, token = authorization_header.split(' ')
-        if auth_type == 'Bearer':
-            try:
-                token_obj = Token.objects.get(key=token)
-                user = token_obj.user
+    # At this point, DRF has already authenticated the user and set request.user
+    user = request.user
 
-                user_profile = models.UserProfile.objects.get(user=user)
+    try:
+        user_profile = models.UserProfile.objects.get(user=user)
+    except models.UserProfile.DoesNotExist:
+        return Response(
+            {'status': 'Failed', 'error': 'UserProfile not found.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-                serializer = TransactionSerializer(data=request.data)
-                if serializer.is_valid():
-                    phone_number = serializer.validated_data.get('account_number')
-                    reference = serializer.validated_data.get('reference')
-                    bundle_volume = serializer.validated_data.get('bundle_amount')
+    serializer = TransactionSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(
+            {
+                "status": "Failed",
+                "error": "Body error",
+                "message": "Body Parameters set not valid. Check and try again.",
+                "details": serializer.errors  # Optional: Provide serializer errors for debugging
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-                    if user_profile.bundle_balance < bundle_volume:
-                        return Response(data={"status": "Failed", "error": "Insufficient Balance",
-                                              "message": "You do not have enough balance to perform this transaction"},
-                                        status=status.HTTP_400_BAD_REQUEST)
+    phone_number = serializer.validated_data.get('account_number')
+    reference = serializer.validated_data.get('reference')
+    bundle_volume = serializer.validated_data.get('bundle_amount')
 
-                    if models.NewTransaction.objects.filter(user=user, reference=reference).exists():
-                        return Response(data={"status": "Failed", "error": "Duplicate Error",
-                                              "message": "Transaction reference already exists"},
-                                        status=status.HTTP_409_CONFLICT)
-                    status_code, send_bundle_response = helper.send_bundle(request.user, phone_number, bundle_volume, reference)
-                    print(send_bundle_response)
+    # Check if user has sufficient balance
+    if user_profile.bundle_balance < bundle_volume:
+        return Response(
+            {
+                "status": "Failed",
+                "error": "Insufficient Balance",
+                "message": "You do not have enough balance to perform this transaction"
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-                    sms_headers = {
-                        'Authorization': 'Bearer 1136|LwSl79qyzTZ9kbcf9SpGGl1ThsY0Ujf7tcMxvPze',
-                        'Content-Type': 'application/json'
-                    }
+    # Check for duplicate transaction reference
+    if models.NewTransaction.objects.filter(user=user, reference=reference).exists():
+        return Response(
+            {
+                "status": "Failed",
+                "error": "Duplicate Error",
+                "message": "Transaction reference already exists"
+            },
+            status=status.HTTP_409_CONFLICT
+        )
 
-                    sms_url = 'https://webapp.usmsgh.com/api/sms/send'
-                    if send_bundle_response != "bad response":
-                        print("good response")
-                        if (
-                                status_code == 200 and send_bundle_response['data']['request_status_code'] == '200'
-                        ):
-                            user_profile.bundle_balance -= float(bundle_volume)
-                            user_profile.save()
-                            new_txn = models.NewTransaction.objects.create(
-                                user=request.user,
-                                account_number=phone_number,
-                                bundle_amount=bundle_volume,
-                                reference=reference,
-                                transaction_status="Completed"
-                            )
-                            new_txn.save()
-                            user.save()
-                            receiver_message = f"Your bundle purchase has been completed successfully. {bundle_volume}MB has been credited to you by {user_profile.phone}.\nReference: {reference}\n"
-                            sms_message = f"Hello @{request.user.username}. Your bundle purchase has been completed successfully. {bundle_volume}MB has been credited to {phone_number}.\nReference: {reference}\nCurrent Wallet Balance: {user_profile.bundle_balance}\n"
+    # Attempt to send the bundle
+    status_code, send_bundle_response = helper.send_bundle(user, phone_number, bundle_volume, reference)
+    print(send_bundle_response)
 
-                            # response1 = requests.get(
-                            #     f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{user_profile.phone}&from=GEO_AT&sms={sms_message}")
-                            # print(response1.text)
+    sms_headers = {
+        'Authorization': 'Bearer YOUR_SMS_API_TOKEN',  # Replace with your actual SMS API token
+        'Content-Type': 'application/json'
+    }
 
-                            # response2 = requests.get(
-                            #     f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to={phone_number}&from=GEO_AT&sms={receiver_message}")
-                            # print(response2.text)
-                            return Response(
-                                data={"status": "Success",
-                                      "message": "Transaction was completed successfully",
-                                      "reference": reference},
-                                status=status.HTTP_200_OK)
-                        else:
-                            new_txn = models.NewTransaction.objects.create(
-                                user=request.user,
-                                account_number=phone_number,
-                                bundle_amount=bundle_volume,
-                                reference=reference,
-                                transaction_status="Failed"
-                            )
-                            new_txn.save()
-                            return Response(
-                                data={"status": "Failed",
-                                      "message": "Something went wrong on our end. Try again later",
-                                      "reference": reference},
-                                status=status.HTTP_503_SERVICE_UNAVAILABLE)
-                else:
-                    return Response(
-                        data={"status": "Failed", "error": "Body error",
-                              "message": "Body Parameters set not valid. Check and try again."},
-                        status=status.HTTP_400_BAD_REQUEST)
-            except Token.DoesNotExist:
-                return Response({'error': 'Token does not exist.'}, status=status.HTTP_401_UNAUTHORIZED)
+    sms_url = 'https://webapp.usmsgh.com/api/sms/send'
+
+    if send_bundle_response != "bad response":
+        print("good response")
+        # Ensure 'data' and 'request_status_code' keys exist in send_bundle_response
+        if (
+            status_code == 200 and
+            send_bundle_response.get('data', {}).get('request_status_code') == '200'
+        ):
+            # Successful transaction
+            user_profile.bundle_balance -= float(bundle_volume)
+            user_profile.save()
+
+            # Record the transaction
+            new_txn = models.NewTransaction.objects.create(
+                user=user,
+                account_number=phone_number,
+                bundle_amount=bundle_volume,
+                reference=reference,
+                transaction_status="Completed"
+            )
+            new_txn.save()
+
+            # Prepare SMS messages
+            receiver_message = (
+                f"Your bundle purchase has been completed successfully. {bundle_volume}MB has been credited to you by {user_profile.phone}.\n"
+                f"Reference: {reference}\n"
+            )
+            sms_message = (
+                f"Hello @{user.username}. Your bundle purchase has been completed successfully. {bundle_volume}MB has been credited to {phone_number}.\n"
+                f"Reference: {reference}\n"
+                f"Current Wallet Balance: {user_profile.bundle_balance}\n"
+            )
+
+            # Send SMS to user (uncomment and configure properly)
+            # response1 = requests.post(
+            #     sms_url,
+            #     headers=sms_headers,
+            #     json={
+            #         "to": f"0{user_profile.phone}",
+            #         "from": "GEO_AT",
+            #         "sms": sms_message
+            #     }
+            # )
+            # print(response1.text)
+
+            # Send SMS to receiver (uncomment and configure properly)
+            # response2 = requests.post(
+            #     sms_url,
+            #     headers=sms_headers,
+            #     json={
+            #         "to": phone_number,
+            #         "from": "GEO_AT",
+            #         "sms": receiver_message
+            #     }
+            # )
+            # print(response2.text)
+
+            return Response(
+                {
+                    "status": "Success",
+                    "message": "Transaction was completed successfully",
+                    "reference": reference
+                },
+                status=status.HTTP_200_OK
+            )
         else:
-            return Response({'error': 'Invalid Header Provided.'}, status=status.HTTP_401_UNAUTHORIZED)
+            # Failed transaction on the bundle sending side
+            new_txn = models.NewTransaction.objects.create(
+                user=user,
+                account_number=phone_number,
+                bundle_amount=bundle_volume,
+                reference=reference,
+                transaction_status="Failed"
+            )
+            new_txn.save()
+            return Response(
+                {
+                    "status": "Failed",
+                    "message": "Something went wrong on our end. Try again later",
+                    "reference": reference
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+    else:
+        # Bundle sending response was bad
+        return Response(
+            {
+                "status": "Failed",
+                "message": "Failed to send bundle. Try again later.",
+                "reference": reference
+            },
+            status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
 
 
 @api_view(['GET'])
