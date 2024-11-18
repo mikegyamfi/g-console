@@ -185,7 +185,7 @@ def send_bundle_page(request):
             messages.error(request, "You do not have enough balance to perform this transaction")
             return redirect('send_bundle_page')
         else:
-            send_bundle_response = helper.send_bundle(request.user, receiver, amount, reference)
+            status_code, send_bundle_response = helper.send_bundle(request.user, receiver, amount, reference)
             print(send_bundle_response)
 
             sms_headers = {
@@ -194,67 +194,52 @@ def send_bundle_page(request):
             }
 
             sms_url = 'https://webapp.usmsgh.com/api/sms/send'
-            if send_bundle_response == "bad response":
-                new_txn = models.NewTransaction.objects.create(
-                    user=request.user,
-                    account_number=receiver,
-                    bundle_amount=amount,
-                    reference=reference,
-                    transaction_status="Completed",
-                    mode="Console"
-                )
-                new_txn.save()
-                current_user.bundle_balance -= float(amount)
-                current_user.save()
-                receiver_message = f"Your bundle purchase has been completed successfully. {amount}MB has been credited to you by {current_user.phone}.\nReference: {reference}\n"
-                sms_message = f"Hello @{request.user.username}. Your bundle purchase has been completed successfully. {amount}MB has been credited to {receiver}.\nReference: {reference}\nCurrent Wallet Balance: {current_user.bundle_balance}"
+            if send_bundle_response != "bad response":
+                print("good response")
+                if (
+                        status_code == 200 and send_bundle_response['data']['request_status_code'] == '200'
+                ):
+                    new_txn = models.NewTransaction.objects.create(
+                        user=request.user,
+                        account_number=receiver,
+                        bundle_amount=amount,
+                        reference=reference,
+                        transaction_status="Completed",
+                        mode="Console"
+                    )
+                    new_txn.save()
+                    current_user.bundle_balance -= float(amount)
+                    current_user.save()
+                    receiver_message = f"Your bundle purchase has been completed successfully. {amount}MB has been credited to you by {current_user.phone}.\nReference: {reference}\n"
+                    sms_message = f"Hello @{request.user.username}. Your bundle purchase has been completed successfully. {amount}MB has been credited to {receiver}.\nReference: {reference}\nCurrent Wallet Balance: {current_user.bundle_balance}"
 
-                print(receiver_message)
-                print(sms_message)
-                try:
-                    response1 = requests.get(
-                        f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{current_user.phone}&from={current_user.business_name}&sms={sms_message}")
-                    print(response1.text)
+                    print(receiver_message)
+                    print(sms_message)
+                    try:
+                        response1 = requests.get(
+                            f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{current_user.phone}&from={current_user.business_name}&sms={sms_message}")
+                        print(response1.text)
 
-                    response2 = requests.get(
-                        f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to={receiver}&from={current_user.business_name}&sms={receiver_message}")
-                    print(response2.text)
-                except:
+                        response2 = requests.get(
+                            f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to={receiver}&from={current_user.business_name}&sms={receiver_message}")
+                        print(response2.text)
+                    except:
+                        messages.success(request, "Transaction was completed successfully")
+                        return redirect(send_bundle_page)
                     messages.success(request, "Transaction was completed successfully")
                     return redirect(send_bundle_page)
-                messages.success(request, "Transaction was completed successfully")
-                return redirect(send_bundle_page)
-            elif send_bundle_response["data"]["request_status_code"] == "200" or send_bundle_response[
-                "request_message"] == "Successful":
-                new_txn = models.NewTransaction.objects.create(
-                    user=request.user,
-                    account_number=receiver,
-                    bundle_amount=amount,
-                    reference=reference,
-                    transaction_status="Completed",
-                    mode="Console"
-                )
-                new_txn.save()
-                current_user.bundle_balance -= float(amount)
-                current_user.save()
-                receiver_message = f"Your bundle purchase has been completed successfully. {amount}MB has been credited to you by {current_user.phone}.\nReference: {reference}\n"
-                sms_message = f"Hello @{request.user.username}. Your bundle purchase has been completed successfully. {amount}MB has been credited to {receiver}.\nReference: {reference}\nCurrent Wallet Balance: {current_user.bundle_balance}"
-
-                print(receiver_message)
-                print(sms_message)
-                try:
-                    response1 = requests.get(
-                        f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{current_user.phone}&from={current_user.business_name}&sms={sms_message}")
-                    print(response1.text)
-
-                    response2 = requests.get(
-                        f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to={receiver}&from={current_user.business_name}&sms={receiver_message}")
-                    print(response2.text)
-                except:
-                    messages.success(request, "Transaction was completed successfully")
+                else:
+                    new_txn = models.NewTransaction.objects.create(
+                        user=request.user,
+                        account_number=receiver,
+                        bundle_amount=amount,
+                        reference=reference,
+                        transaction_status="Failed",
+                        mode="Console"
+                    )
+                    new_txn.save()
+                    messages.error(request, "Something went wrong on our end. Try again later")
                     return redirect(send_bundle_page)
-                messages.success(request, "Transaction was completed successfully")
-                return redirect(send_bundle_page)
             else:
                 new_txn = models.NewTransaction.objects.create(
                     user=request.user,

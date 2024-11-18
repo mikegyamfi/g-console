@@ -113,7 +113,7 @@ def new_transaction(request):
                         return Response(data={"status": "Failed", "error": "Duplicate Error",
                                               "message": "Transaction reference already exists"},
                                         status=status.HTTP_409_CONFLICT)
-                    send_bundle_response = helper.send_bundle(request.user, phone_number, bundle_volume, reference)
+                    status_code, send_bundle_response = helper.send_bundle(request.user, phone_number, bundle_volume, reference)
                     print(send_bundle_response)
 
                     sms_headers = {
@@ -124,7 +124,9 @@ def new_transaction(request):
                     sms_url = 'https://webapp.usmsgh.com/api/sms/send'
                     if send_bundle_response != "bad response":
                         print("good response")
-                        if send_bundle_response["data"]["request_status_code"] == "200" or send_bundle_response["request_message"] == "Successful":
+                        if (
+                                status_code == 200 and send_bundle_response['data']['request_status_code'] == '200'
+                        ):
                             user_profile.bundle_balance -= float(bundle_volume)
                             user_profile.save()
                             new_txn = models.NewTransaction.objects.create(
