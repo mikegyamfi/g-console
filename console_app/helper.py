@@ -13,7 +13,7 @@ def send_bundle(user, receiver, bundle_amount, reference):
 
         payload = {
             'type': 'pushData',
-            'apikey': config('APIKEY'),
+            'apikey': config('API_KEY'),
             'ref': str(reference),
             'data': str(int(bundle_amount)),
             'share': str(receiver)
